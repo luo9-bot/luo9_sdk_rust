@@ -1,0 +1,19 @@
+[package]
+name = "luo9_sdk"
+version = "0.2.0"
+authors = ["luoy-oss <2557657882@qq.com>"]
+edition = "2024"
+description = "rust SDK for Luo9"
+license = "GPL-3.0"
+repository = "https://github.com/luo9-bot/luo9_sdk_rust"
+homepage = "https://www.drluo.top"
+documentation = "https://www.drluo.top/posts/luo9_sdk"
+readme = "README.md"
+keywords = ["bot", "luo9", "sdk", "plugin"]
+categories = ["api-bindings"]
+
+[dependencies]
+libc = "0.2"
+libloading = "0.9.0"
+serde_json = "1.0"
+
