@@ -17,19 +17,19 @@ impl MsgBuilder {
         self
     }
 
-    pub fn txt(mut self, text: &str) -> Self {
-        self.parts.push(text.to_string());
+    pub fn txt(mut self, text: impl Into<String>) -> Self {
+        self.parts.push(text.into());
         self
     }
 
-    pub fn image(mut self, path: &str) -> Self {
-        if path.contains("http") {
-            self.parts.push(format!("[CQ:image, url={}]", path));
-            self
+    pub fn image(mut self, path: impl Into<String>) -> Self {
+        let path_str: String = path.into();
+        if path_str.contains("http") {
+            self.parts.push(format!("[CQ:image, url={}]", path_str));
         } else {
-            self.parts.push(format!("[CQ:image, file={}]", path));
-            self
+            self.parts.push(format!("[CQ:image, file={}]", path_str));
         }
+        self
     }
 
     pub fn build(self) -> CString {
@@ -39,7 +39,7 @@ impl MsgBuilder {
 }
 
 impl Msg {
-    pub fn new(text: &str) -> MsgBuilder {
+    pub fn new(text: impl Into<String>) -> MsgBuilder {
         MsgBuilder::default().txt(text)
     }
 
@@ -47,11 +47,11 @@ impl Msg {
         MsgBuilder::default().at(user_id)
     }
 
-    pub fn txt(text: &str) -> MsgBuilder {
+    pub fn txt(text: impl Into<String>) -> MsgBuilder {
         MsgBuilder::default().txt(text)
     }
 
-    pub fn image(path: &str) -> MsgBuilder {
+    pub fn image(path: impl Into<String>) -> MsgBuilder {
         MsgBuilder::default().image(path)
     }
 }
@@ -62,10 +62,21 @@ mod tests {
 
     #[test]
     fn test_new_msg() {
-        let msg = Msg::txt("hello world")
-                                .at(123321).endl()
-                                .image("https://example.com/image.jpg").build();
+        // 仍然可以使用 &str
+        let msg1 = Msg::txt("hello world")
+                            .at(123321).endl()
+                            .image("https://example.com/image.jpg").build();
         
-        println!(">>>> msg : {:?}", msg);
+        println!(">>>> msg1 : {:?}", msg1);
+
+        // 现在也可以使用 String
+        let text = String::from("hello from String");
+        let img_path = String::from("local_image.png");
+        
+        let msg2 = Msg::txt(text)
+                            .at(456654).endl()
+                            .image(img_path).build();
+        
+        println!(">>>> msg2 : {:?}", msg2);
     }
 }
