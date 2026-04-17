@@ -13,7 +13,7 @@ impl MsgBuilder {
     }
 
     pub fn at(mut self, user_id: u64) -> Self {
-        self.parts.push(format!("@{}", user_id));
+        self.parts.push(format!("[CQ:at,qq={}]", user_id));
         self
     }
 
