@@ -3,7 +3,10 @@ use std::ffi::CString;
 
 
 pub mod command;
+pub mod message;
+
 pub struct Bot;
+pub struct Msg;
 
 impl Bot {
     pub fn get_version() -> String {
@@ -40,3 +43,4 @@ unsafe extern "C" {
     /// 发送私聊消息
     pub fn luo9_send_private_msg(user_id: u64, msg: *const c_char) -> i64;
 }
+
