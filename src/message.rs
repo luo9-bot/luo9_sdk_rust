@@ -25,9 +25,9 @@ impl MsgBuilder {
     pub fn image(mut self, path: impl Into<String>) -> Self {
         let path_str: String = path.into();
         if path_str.contains("http") {
-            self.parts.push(format!("[CQ:image, url={}]", path_str));
+            self.parts.push(format!("[CQ:image,url={}]", path_str));
         } else {
-            self.parts.push(format!("[CQ:image, file={}]", path_str));
+            self.parts.push(format!("[CQ:image,file={}]", path_str));
         }
         self
     }
