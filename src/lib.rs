@@ -5,7 +5,7 @@ use std::ffi::CString;
 pub mod command;
 pub mod message;
 pub mod pattern;
-// pub mod bus;
+pub mod bus;
 
 
 #[cfg(test)]
