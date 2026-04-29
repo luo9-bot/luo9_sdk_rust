@@ -6,5 +6,8 @@ Cargo.lock
 
 .vscode/*
 
+tests.rs
 
 luo9_sdk.md
+
+.claude/
