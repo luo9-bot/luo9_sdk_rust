@@ -42,6 +42,7 @@ impl Bot {
     }
 }
 
+#[link(name = "luo9_core")]
 unsafe extern "C" {
     /// 获取核心版本信息
     pub fn luo9_version() -> *const c_char;

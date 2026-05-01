@@ -3,6 +3,7 @@
 use libc::c_char;
 use std::ffi::{CStr, CString};
 
+#[link(name = "luo9_core")]
 unsafe extern "C" {
     unsafe fn luo9_bus_init() -> libc::c_int;
     unsafe fn luo9_bus_subscribe(topic: *const c_char) -> libc::c_int;

@@ -9,6 +9,7 @@ pub struct CommandHandle {
     _private: [u8; 0],
 }
 
+#[link(name = "luo9_core")]
 unsafe extern "C" {
     unsafe fn luo9_command_create(
         msg: *const c_char,
