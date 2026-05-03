@@ -8,6 +8,7 @@ pub mod pattern;
 pub mod bus;
 pub mod payload;
 pub mod send;
+pub mod version;
 
 
 #[cfg(test)]
