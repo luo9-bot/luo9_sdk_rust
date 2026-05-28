@@ -27,6 +27,7 @@ pub struct PluginSubscribers {
     pub message_sub_id: libc::c_int,
     pub meta_event_sub_id: libc::c_int,
     pub notice_sub_id: libc::c_int,
+    pub request_sub_id: libc::c_int,
     pub task_sub_id: libc::c_int,
     pub send_sub_id: libc::c_int,
 }
@@ -50,6 +51,7 @@ pub unsafe extern "C" fn luo9_init_subscribers(subscribers: *const PluginSubscri
         ("luo9_message", subs.message_sub_id),
         ("luo9_meta_event", subs.meta_event_sub_id),
         ("luo9_notice", subs.notice_sub_id),
+        ("luo9_request", subs.request_sub_id),
         ("luo9_task", subs.task_sub_id),
         ("luo9_send", subs.send_sub_id),
     ];
@@ -82,6 +84,12 @@ impl Bot {
         let msg = message.to_str().ok()?;
         send::send_group_msg(group_id, msg)
     }
+
+    // pub fn send_group_image(group_id: u64, file_name: CString) -> Option<()> {
+    //     let msg = message.to_str().ok()?;
+    //     send::send_group_msg(group_id, msg)
+    // }
+
 
     /// 发送私聊消息（基于 bus 总线，fire-and-forget）
     pub fn send_private_msg(user_id: u64, message: CString) -> Option<()> {
