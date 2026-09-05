@@ -17,7 +17,8 @@ pub(crate) static PRECREATED_SUBSCRIBERS: OnceLock<Mutex<HashMap<String, usize>>
 unsafe extern "C" {
     unsafe fn luo9_bus_init() -> libc::c_int;
     unsafe fn luo9_bus_subscribe(topic: *const c_char) -> libc::c_int;
-    unsafe fn luo9_bus_unsubscribe(topic: *const c_char, subscriber_id: libc::c_int) -> libc::c_int;
+    unsafe fn luo9_bus_unsubscribe(topic: *const c_char, subscriber_id: libc::c_int)
+    -> libc::c_int;
     unsafe fn luo9_bus_publish(topic: *const c_char, payload: *const c_char) -> libc::c_int;
     unsafe fn luo9_bus_publish_to(
         topic: *const c_char,
@@ -103,7 +104,8 @@ impl<'a> Topic<'a> {
         let topic = CString::new(self.name).map_err(|_| BusError::InvalidString)?;
         let payload = CString::new(payload).map_err(|_| BusError::InvalidString)?;
 
-        let ids_cint: Vec<libc::c_int> = subscriber_ids.iter().map(|&id| id as libc::c_int).collect();
+        let ids_cint: Vec<libc::c_int> =
+            subscriber_ids.iter().map(|&id| id as libc::c_int).collect();
 
         let ret = unsafe {
             luo9_bus_publish_to(

@@ -1,8 +1,9 @@
-use libc::{c_char, c_int};
-use std::{collections::HashMap, ffi::{CStr, CString}};
 use crate::pattern::Pattern;
-
-
+use libc::{c_char, c_int};
+use std::{
+    collections::HashMap,
+    ffi::{CStr, CString},
+};
 
 #[repr(C)]
 pub struct CommandHandle {
@@ -55,9 +56,8 @@ impl Command {
             PrefixMode::None => (2, 0),
         };
 
-        let handle = unsafe {
-            luo9_command_create(msg_c.as_ptr(), cmd_c.as_ptr(), mode_val, prefix)
-        };
+        let handle =
+            unsafe { luo9_command_create(msg_c.as_ptr(), cmd_c.as_ptr(), mode_val, prefix) };
         if handle.is_null() {
             return None;
         }
@@ -84,7 +84,7 @@ impl Command {
         Some(Self { handle, name, args })
     }
 
-     pub fn name(&self) -> &str {
+    pub fn name(&self) -> &str {
         &self.name
     }
 
@@ -128,30 +128,24 @@ impl Command {
         if matched {
             f();
         }
-        CommandMatcher {
-            cmd: self,
-            matched,
-        }
+        CommandMatcher { cmd: self, matched }
     }
 
     /// 启动链式匹配
     pub fn on<'a, F>(&'a self, expected: &'a str, f: F) -> CommandMatcher<'a>
     where
-        F: FnOnce(&[String]) + 'a
+        F: FnOnce(&[String]) + 'a,
     {
         let matched = self.arg_at(0) == Some(expected);
         if matched {
             f(self.args_from(1));
         }
-        CommandMatcher {
-            cmd: self,
-            matched
-        }
+        CommandMatcher { cmd: self, matched }
     }
 
     pub fn on_pattern<'a, F>(&'a self, pattern: &'a str, f: F) -> CommandMatcher<'a>
     where
-        F: FnOnce(HashMap<String, String>, &[String]) + 'a
+        F: FnOnce(HashMap<String, String>, &[String]) + 'a,
     {
         let mut matched = false;
         if let Some(first_arg) = self.arg_at(0) {
@@ -161,10 +155,7 @@ impl Command {
                 matched = true;
             }
         }
-        CommandMatcher {
-            cmd: self,
-            matched
-        }
+        CommandMatcher { cmd: self, matched }
     }
 }
 
@@ -222,9 +213,9 @@ impl<'a> CommandMatcher<'a> {
 }
 
 #[cfg(test)]
-mod tests{
+mod tests {
     use super::*;
-   
+
     // #[test]
     fn test_optional_prefix_echo() {
         let cmd = Command::parse("/echo hello world", "echo", PrefixMode::Optional('/')).unwrap();
@@ -249,17 +240,17 @@ mod tests{
         .on("状态", |_| {
             println!("状态");
         });
-
     }
 
     #[test]
     fn test_status() {
-        let cmd = Command::parse("epic[CQ:at,qq=123123321321]状态", "epic", PrefixMode::None).unwrap();
+        let cmd =
+            Command::parse("epic[CQ:at,qq=123123321321]状态", "epic", PrefixMode::None).unwrap();
         cmd.on_pattern("[CQ:at,qq={qq}]{content}", |caps, args| {
             let qq = caps.get("qq").unwrap();
-            println!("提取到 QQ: {}", qq);  // 现在会输出
+            println!("提取到 QQ: {}", qq); // 现在会输出
             let content = caps.get("content").unwrap();
-            println!("提取到 内容: {}", content);  // 现在会输出
+            println!("提取到 内容: {}", content); // 现在会输出
             if let Some(subcmd) = args.first() {
                 match subcmd.as_str() {
                     "状态" => println!("执行状态查询"),
@@ -276,8 +267,5 @@ mod tests{
         cmd.on("epic", |_| {
             println!("epic");
         });
-
     }
-
-
 }
