@@ -1,15 +1,13 @@
 use libc::c_char;
 use std::ffi::CString;
 
-
+pub mod bus;
 pub mod command;
 pub mod message;
 pub mod pattern;
-pub mod bus;
 pub mod payload;
 pub mod send;
 pub mod version;
-
 
 #[cfg(test)]
 pub mod tests;
@@ -58,9 +56,12 @@ pub unsafe extern "C" fn luo9_init_subscribers(subscribers: *const PluginSubscri
 
     for (topic, sub_id) in mapping {
         if sub_id >= 0 {
-            let _ = bus::PRECREATED_SUBSCRIBERS.get_or_init(|| std::sync::Mutex::new(std::collections::HashMap::new()));
+            let _ = bus::PRECREATED_SUBSCRIBERS
+                .get_or_init(|| std::sync::Mutex::new(std::collections::HashMap::new()));
             if let Some(map) = bus::PRECREATED_SUBSCRIBERS.get() {
-                map.lock().unwrap().insert(topic.to_string(), sub_id as usize);
+                map.lock()
+                    .unwrap()
+                    .insert(topic.to_string(), sub_id as usize);
             }
         }
     }
@@ -85,16 +86,40 @@ impl Bot {
         send::send_group_msg(group_id, msg)
     }
 
-    // pub fn send_group_image(group_id: u64, file_name: CString) -> Option<()> {
-    //     let msg = message.to_str().ok()?;
-    //     send::send_group_msg(group_id, msg)
-    // }
-
+    /// 发送群消息并引用指定消息（CQ:reply 组合）
+    pub fn send_group_msg_reply(
+        group_id: u64,
+        reply_to_message_id: u64,
+        message: CString,
+    ) -> Option<()> {
+        let msg = message.to_str().ok()?;
+        send::send_group_msg_reply(group_id, reply_to_message_id, msg)
+    }
 
     /// 发送私聊消息（基于 bus 总线，fire-and-forget）
     pub fn send_private_msg(user_id: u64, message: CString) -> Option<()> {
         let msg = message.to_str().ok()?;
         send::send_private_msg(user_id, msg)
+    }
+
+    /// 发送私聊消息并引用指定消息（CQ:reply 组合）
+    pub fn send_private_msg_reply(
+        user_id: u64,
+        reply_to_message_id: u64,
+        message: CString,
+    ) -> Option<()> {
+        let msg = message.to_str().ok()?;
+        send::send_private_msg_reply(user_id, reply_to_message_id, msg)
+    }
+
+    /// 撤回消息（需要先通过 luo9_sent 回执拿到自己消息的 message_id）
+    pub fn delete_msg(message_id: u64) -> Option<()> {
+        send::delete_msg(message_id)
+    }
+
+    /// 对一条消息设置表情回应（emoji_id 为 QQ 表情数字 ID）
+    pub fn set_msg_emoji_like(message_id: u64, emoji_id: u64) -> Option<()> {
+        send::set_msg_emoji_like(message_id, emoji_id)
     }
 }
 

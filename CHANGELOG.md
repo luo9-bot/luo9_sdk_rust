@@ -85,3 +85,14 @@
 [0.3.0]: https://github.com/luo9-bot/luo9_sdk_rust/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/luo9-bot/luo9_sdk_rust/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/luo9-bot/luo9_sdk_rust/releases/tag/v0.1.0
+
+## [Unreleased]
+
+### 新增
+- **发送回执**：核心发送成功后把 NapCat 返回的 message_id 发布到 `luo9_sent` topic；
+  SDK 新增 `SentPayload` 载荷与 `BusPayload::Sent` 变体
+- **撤回消息**：`SendAction::DeleteMsg` / `send::delete_msg` / `Bot::delete_msg`（NapCat: delete_msg）
+- **表情回应**：`SendAction::SetMsgEmojiLike` / `send::set_msg_emoji_like` / `Bot::set_msg_emoji_like`
+  （NapCat: set_msg_emoji_like）
+- **引用回复**：`send_group_msg_reply` / `send_private_msg_reply` / 对应 `Bot` 方法
+  （CQ:reply 组合，OneBot v11 字符串消息原生支持）

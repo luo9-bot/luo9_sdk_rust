@@ -329,6 +329,26 @@ pub enum SubType {
     None,
 }
 
+// ── 发送回执载荷 ────────────────────────────────────────────────
+
+/// 发送回执：核心调用 NapCat 发送成功后发布到 `luo9_sent`
+///
+/// JSON 形如 `{"Sent": {"group_id":..., "user_id":..., "message_id":..., "message":...}}`。
+/// 插件用它把自己发出的内容与 message_id 关联起来（撤回等操作的前提）。
+#[derive(Debug, Clone, Deserialize, Default)]
+pub struct SentPayload {
+    #[serde(default)]
+    pub group_id: Option<u64>,
+    #[serde(default)]
+    pub user_id: u64,
+    #[serde(default)]
+    pub message_id: u64,
+    #[serde(default)]
+    pub message: String,
+    #[serde(default)]
+    pub time: u64,
+}
+
 // ── 总线载荷 ────────────────────────────────────────────────────
 
 /// 从总线 topic pop 出的 JSON 解析为此枚举
@@ -338,12 +358,14 @@ pub enum SubType {
 /// - `luo9_meta_event`  → `{"MetaEvent": { ... }}`
 /// - `luo9_notice`      → `{"Notice": { ... }}`
 /// - `luo9_request`     → `{"Request": { ... }}`
+/// - `luo9_sent`        → `{"Sent": { ... }}`
 #[derive(Debug, Deserialize)]
 pub enum BusPayload {
     Message(MessagePayload),
     MetaEvent(MetaEventPayload),
     Notice(NoticePayload),
     Request(RequestPayload),
+    Sent(SentPayload),
 }
 
 impl BusPayload {
