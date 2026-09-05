@@ -39,6 +39,8 @@ impl MsgBuilder {
 }
 
 impl Msg {
+    /// builder 入口：返回 MsgBuilder 而非 Self（at/txt/image 同理）
+    #[allow(clippy::new_ret_no_self)]
     pub fn new(text: impl Into<String>) -> MsgBuilder {
         MsgBuilder::default().txt(text)
     }
@@ -60,7 +62,7 @@ impl Msg {
 mod tests {
     use super::*;
 
-    // #[test]
+    #[test]
     fn test_new_msg() {
         // 仍然可以使用 &str
         let msg1 = Msg::txt("hello world")

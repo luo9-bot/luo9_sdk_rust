@@ -72,10 +72,8 @@ impl Pattern {
     fn next_literal_after(&self, current: &PatternPart) -> Option<&str> {
         let mut found = false;
         for part in &self.parts {
-            if found {
-                if let PatternPart::Literal(lit) = part {
-                    return Some(lit);
-                }
+            if found && let PatternPart::Literal(lit) = part {
+                return Some(lit);
             }
             if std::ptr::eq(part, current) {
                 found = true;

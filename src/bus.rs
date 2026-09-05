@@ -63,10 +63,10 @@ impl<'a> Topic<'a> {
     /// 新订阅者会自动在队列中收到最后一条消息。
     pub fn subscribe(&self) -> Result<usize, BusError> {
         // 检查是否有预分配的 subscriber_id
-        if let Some(map) = PRECREATED_SUBSCRIBERS.get() {
-            if let Some(&id) = map.lock().unwrap().get(self.name) {
-                return Ok(id);
-            }
+        if let Some(map) = PRECREATED_SUBSCRIBERS.get()
+            && let Some(&id) = map.lock().unwrap().get(self.name)
+        {
+            return Ok(id);
         }
 
         let topic = CString::new(self.name).map_err(|_| BusError::InvalidString)?;

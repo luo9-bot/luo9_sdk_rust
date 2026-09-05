@@ -177,11 +177,9 @@ impl<'a> CommandMatcher<'a> {
     where
         F: FnOnce(&[String]),
     {
-        if !self.matched {
-            if self.cmd.arg_at(0) == Some(expected) {
-                f(self.cmd.args_from(1));
-                self.matched = true;
-            }
+        if !self.matched && self.cmd.arg_at(0) == Some(expected) {
+            f(self.cmd.args_from(1));
+            self.matched = true;
         }
         self
     }
@@ -190,13 +188,13 @@ impl<'a> CommandMatcher<'a> {
     where
         F: FnOnce(HashMap<String, String>, &[String]),
     {
-        if !self.matched {
-            if let Some(first_arg) = self.cmd.arg_at(0) {
-                let pat = Pattern::new(pattern);
-                if let Some(captures) = pat.match_str(first_arg) {
-                    f(captures, self.cmd.args_from(1));
-                    self.matched = true;
-                }
+        if !self.matched
+            && let Some(first_arg) = self.cmd.arg_at(0)
+        {
+            let pat = Pattern::new(pattern);
+            if let Some(captures) = pat.match_str(first_arg) {
+                f(captures, self.cmd.args_from(1));
+                self.matched = true;
             }
         }
         self
@@ -216,18 +214,18 @@ impl<'a> CommandMatcher<'a> {
 mod tests {
     use super::*;
 
-    // #[test]
+    #[test]
     fn test_optional_prefix_echo() {
         let cmd = Command::parse("/echo hello world", "echo", PrefixMode::Optional('/')).unwrap();
         assert_eq!(cmd.name(), "echo");
         assert_eq!(cmd.args_raw(), " hello world");
-        assert_eq!(cmd.has_args(), true);
+        assert!(cmd.has_args());
         assert_eq!(cmd.args_count(), 2);
         assert_eq!(cmd.arg_at(0), Some("hello"));
         assert_eq!(cmd.arg_at(1), Some("world"));
     }
 
-    // #[test]
+    #[test]
     fn test_required_prefix_echo() {
         let cmd = Command::parse("epic提醒关闭", "epic", PrefixMode::None).unwrap();
 
@@ -251,11 +249,10 @@ mod tests {
             println!("提取到 QQ: {}", qq); // 现在会输出
             let content = caps.get("content").unwrap();
             println!("提取到 内容: {}", content); // 现在会输出
-            if let Some(subcmd) = args.first() {
-                match subcmd.as_str() {
-                    "状态" => println!("执行状态查询"),
-                    _ => {}
-                }
+            if let Some(subcmd) = args.first()
+                && subcmd == "状态"
+            {
+                println!("执行状态查询");
             }
         });
     }
