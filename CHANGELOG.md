@@ -86,7 +86,7 @@
 [0.2.0]: https://github.com/luo9-bot/luo9_sdk_rust/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/luo9-bot/luo9_sdk_rust/releases/tag/v0.1.0
 
-## [Unreleased]
+## [0.8.0-beta.1] - 2026-06-28
 
 ### 新增
 - **发送回执**：核心发送成功后把 NapCat 返回的 message_id 发布到 `luo9_sent` topic；
