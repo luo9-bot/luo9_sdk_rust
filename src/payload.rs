@@ -368,6 +368,55 @@ pub enum BusPayload {
     Sent(SentPayload),
 }
 
+impl Sender {
+    /// 群内展示名称：优先使用群名片，其次使用 QQ 昵称。
+    ///
+    /// user_id 才是身份标识；昵称和群名片都只是可变的展示属性。
+    pub fn display_name(&self) -> &str {
+        if !self.card.is_empty() {
+            &self.card
+        } else if !self.nickname.is_empty() {
+            &self.nickname
+        } else {
+            "群友"
+        }
+    }
+
+    /// 返回稳定的 AI 身份标签，例如 [QQ:123456|小明]。
+    pub fn identity_label(&self) -> String {
+        format!("[QQ:{}|{}]", self.user_id, self.display_name())
+    }
+}
+
+impl MessagePayload {
+    /// 消息发送者的稳定 QQ 身份。
+    pub fn sender_id(&self) -> u64 {
+        self.sender
+            .as_ref()
+            .map(|sender| sender.user_id)
+            .filter(|&id| id != 0)
+            .unwrap_or(self.user_id)
+    }
+
+    /// 消息入口提供的发送者展示名称。
+    ///
+    /// 群名片优先于昵称；不要把返回值作为身份 key。
+    pub fn sender_display_name(&self) -> &str {
+        self.sender
+            .as_ref()
+            .map(Sender::display_name)
+            .unwrap_or("群友")
+    }
+
+    /// 生成可直接用于 AI 上下文的稳定身份标签。
+    pub fn sender_identity_label(&self) -> String {
+        match &self.sender {
+            Some(sender) if sender.user_id != 0 => sender.identity_label(),
+            _ => format!("[QQ:{}|{}]", self.user_id, self.sender_display_name()),
+        }
+    }
+}
+
 impl BusPayload {
     /// 从 JSON 字符串解析总线载荷
     pub fn parse(json: &str) -> Option<Self> {
