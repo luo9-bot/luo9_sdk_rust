@@ -95,7 +95,7 @@ mod tests {
     }
     #[test]
     fn cq_builder_escapes_text_and_supports_arbitrary_types() {
-        let output = MessageBuilder::new().text("a[b]&c").push(MessageSegment::new("video", Map::from_iter([("file".into(), Value::String("v.mp4".into()))])).build_cq();
+        let output = MessageBuilder::new().text("a[b]&c").push(MessageSegment::new("video", Map::from_iter([("file".into(), Value::String("v.mp4".into()))]))).build_cq();
         assert_eq!(output, "a&#91;b&#93;&amp;c[CQ:video,file=v.mp4]");
     }
 }
