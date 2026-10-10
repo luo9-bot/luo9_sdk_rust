@@ -1,4 +1,6 @@
 use crate::Msg;
+use crate::segment::{MessageBuilder as SegmentMessageBuilder, MessageSegment};
+use serde_json::{Map, Value};
 use std::ffi::CString;
 
 #[derive(Default)]
@@ -7,6 +9,19 @@ pub struct MsgBuilder {
 }
 
 impl MsgBuilder {
+    /// Append an arbitrary OneBot/NapCat segment. Unknown segment types are preserved
+    /// and encoded as CQ codes for the existing host transport.
+    pub fn segment(mut self, segment: MessageSegment) -> Self {
+        self.parts
+            .push(SegmentMessageBuilder::new().push(segment).build_cq());
+        self
+    }
+
+    /// Append a segment with an arbitrary type and JSON data map.
+    pub fn raw_segment(self, segment_type: impl Into<String>, data: Map<String, Value>) -> Self {
+        self.segment(MessageSegment::new(segment_type, data))
+    }
+
     pub fn endl(mut self) -> Self {
         self.parts.push("\n".to_string());
         self
@@ -61,6 +76,17 @@ impl Msg {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn arbitrary_napcat_segments_can_be_appended() {
+        let msg = Msg::txt("hello")
+            .raw_segment(
+                "video",
+                Map::from_iter([("file".into(), Value::String("clip.mp4".into()))]),
+            )
+            .build();
+        assert_eq!(msg.to_str().unwrap(), "hello[CQ:video,file=clip.mp4]");
+    }
 
     #[test]
     fn test_new_msg() {

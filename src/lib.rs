@@ -6,11 +6,9 @@ pub mod command;
 pub mod message;
 pub mod pattern;
 pub mod payload;
+pub mod segment;
 pub mod send;
 pub mod version;
-
-#[cfg(test)]
-pub mod tests;
 
 pub struct Bot;
 pub struct Msg;

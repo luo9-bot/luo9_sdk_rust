@@ -1,4 +1,6 @@
+use crate::segment::MessageSegment;
 use serde::Deserialize;
+use serde_json::{Map, Value};
 
 // ── 消息类型 ────────────────────────────────────────────────────
 
@@ -54,6 +56,18 @@ pub struct MessagePayload {
     pub user_id: u64,
     pub group_id: Option<u64>,
     pub message: String,
+    /// Structured message segments from NapCat's `message` array.
+    #[serde(default)]
+    pub message_segments: Vec<MessageSegment>,
+    /// Original CQ-code representation when provided by the host.
+    #[serde(default)]
+    pub raw_message: Option<String>,
+    /// Original upstream event, including fields unknown to this SDK version.
+    #[serde(default)]
+    pub raw_event: Option<Value>,
+    /// Forward-compatible fields not yet modelled by this SDK.
+    #[serde(flatten)]
+    pub extra: Map<String, Value>,
     // ── 新增字段（向后兼容）──
     #[serde(default)]
     pub time: u64,
@@ -99,6 +113,11 @@ pub struct Status {
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct MetaEventPayload {
+    /// Original upstream event, including unknown extension fields.
+    #[serde(default)]
+    pub raw_event: Option<Value>,
+    #[serde(flatten)]
+    pub extra: Map<String, Value>,
     pub interval: Option<u64>,
     pub meta_event_type: MetaEventType,
     pub sub_type: SubType,
@@ -174,6 +193,11 @@ pub enum HonorType {
 /// 所有新字段都使用 `#[serde(default)]` 以保持向后兼容。
 #[derive(Debug, Clone, Deserialize)]
 pub struct NoticePayload {
+    /// Original upstream event, including unknown extension fields.
+    #[serde(default)]
+    pub raw_event: Option<Value>,
+    #[serde(flatten)]
+    pub extra: Map<String, Value>,
     pub notice_type: NoticeType,
     #[serde(default)]
     pub sub_type: SubType,
@@ -234,6 +258,11 @@ pub enum GroupRequestSubType {
 /// 请求载荷
 #[derive(Debug, Clone, Deserialize)]
 pub struct RequestPayload {
+    /// Original upstream event, including unknown extension fields.
+    #[serde(default)]
+    pub raw_event: Option<Value>,
+    #[serde(flatten)]
+    pub extra: Map<String, Value>,
     pub request_type: RequestType,
     #[serde(default)]
     pub user_id: u64,
@@ -337,6 +366,11 @@ pub enum SubType {
 /// 插件用它把自己发出的内容与 message_id 关联起来（撤回等操作的前提）。
 #[derive(Debug, Clone, Deserialize, Default)]
 pub struct SentPayload {
+    /// Original upstream event, including unknown extension fields.
+    #[serde(default)]
+    pub raw_event: Option<Value>,
+    #[serde(flatten)]
+    pub extra: Map<String, Value>,
     #[serde(default)]
     pub group_id: Option<u64>,
     #[serde(default)]
@@ -429,6 +463,31 @@ mod identity_tests {
     use super::*;
 
     #[test]
+    fn structured_message_segments_and_unknown_fields_are_preserved() {
+        let payload: MessagePayload = serde_json::from_str(
+            r#"{
+            "message_type": "group",
+            "user_id": 42,
+            "group_id": 7,
+            "message": "[CQ:text,text=hello]",
+            "message_segments": [
+                {"type": "text", "data": {"text": "hello"}},
+                {"type": "future_napcat_segment", "data": {"opaque": {"x": 1}}}
+            ],
+            "future_top_level_field": {"keep": true}
+        }"#,
+        )
+        .expect("payload should parse");
+        assert_eq!(payload.message_segments.len(), 2);
+        assert_eq!(
+            payload.message_segments[1].segment_type,
+            "future_napcat_segment"
+        );
+        assert_eq!(payload.message_segments[1].data["opaque"]["x"], 1);
+        assert_eq!(payload.extra["future_top_level_field"]["keep"], true);
+    }
+
+    #[test]
     fn sender_prefers_group_card_over_nickname() {
         let sender = Sender {
             user_id: 10001,
@@ -468,12 +527,15 @@ mod identity_tests {
 
     #[test]
     fn message_sender_falls_back_to_top_level_user_id() {
-        let payload: MessagePayload = serde_json::from_str(r#"{
+        let payload: MessagePayload = serde_json::from_str(
+            r#"{
             "message_type": "group",
             "user_id": 10003,
             "group_id": 20003,
             "message": "你好"
-        }"#).expect("test payload should parse");
+        }"#,
+        )
+        .expect("test payload should parse");
         assert_eq!(payload.sender_id(), 10003);
         assert_eq!(payload.sender_display_name(), "群友");
         assert_eq!(payload.sender_identity_label(), "[QQ:10003|群友]");
