@@ -81,6 +81,14 @@ mod tests {
     use super::*;
 
     #[test]
+    fn arbitrary_napcat_segments_can_be_appended() {
+        let msg = Msg::txt("hello")
+            .raw_segment("video", Map::from_iter([("file".into(), Value::String("clip.mp4".into()))]))
+            .build();
+        assert_eq!(msg.to_str().unwrap(), "hello[CQ:video,file=clip.mp4]");
+    }
+
+    #[test]
     fn test_new_msg() {
         // 仍然可以使用 &str
         let msg1 = Msg::txt("hello world")
