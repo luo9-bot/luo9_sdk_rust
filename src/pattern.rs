@@ -42,11 +42,7 @@ impl Pattern {
         for part in &self.parts {
             match part {
                 PatternPart::Literal(lit) => {
-                    if let Some(rest) = s_remaining.strip_prefix(lit) {
-                        s_remaining = rest;
-                    } else {
-                        return None;
-                    }
+                    s_remaining = s_remaining.strip_prefix(lit)?;
                 }
                 PatternPart::Capture(name) => {
                     // 贪婪匹配直到下一个字面量出现，或到字符串末尾
