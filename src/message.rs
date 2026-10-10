@@ -9,7 +9,23 @@ pub struct MsgBuilder {
 }
 
 impl MsgBuilder {
-    /// Append an arbitrary OneBot/NapCat segment. Unknown segment types are preserved\n    /// and encoded as CQ codes for the existing host transport.\n    pub fn segment(mut self, segment: MessageSegment) -> Self {\n        self.parts.push(SegmentMessageBuilder::new().push(segment).build_cq());\n        self\n    }\n\n    /// Append a segment with an arbitrary type and JSON data map.\n    pub fn raw_segment(\n        self,\n        segment_type: impl Into<String>,\n        data: Map<String, Value>,\n    ) -> Self {\n        self.segment(MessageSegment::new(segment_type, data))\n    }\n\n    pub fn endl(mut self) -> Self {
+    /// Append an arbitrary OneBot/NapCat segment. Unknown segment types are preserved
+    /// and encoded as CQ codes for the existing host transport.
+    pub fn segment(mut self, segment: MessageSegment) -> Self {
+        self.parts.push(SegmentMessageBuilder::new().push(segment).build_cq());
+        self
+    }
+
+    /// Append a segment with an arbitrary type and JSON data map.
+    pub fn raw_segment(
+        self,
+        segment_type: impl Into<String>,
+        data: Map<String, Value>,
+    ) -> Self {
+        self.segment(MessageSegment::new(segment_type, data))
+    }
+
+    pub fn endl(mut self) -> Self {
         self.parts.push("\n".to_string());
         self
     }
