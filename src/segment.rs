@@ -31,10 +31,7 @@ impl MessageSegment {
     pub fn at(user_id: impl ToString) -> Self {
         Self::new(
             "at",
-            Map::from_iter([(
-                "qq".to_string(),
-                Value::String(user_id.to_string()),
-            )]),
+            Map::from_iter([("qq".to_string(), Value::String(user_id.to_string()))]),
         )
     }
 
@@ -48,10 +45,7 @@ impl MessageSegment {
     pub fn reply(message_id: impl ToString) -> Self {
         Self::new(
             "reply",
-            Map::from_iter([(
-                "id".to_string(),
-                Value::String(message_id.to_string()),
-            )]),
+            Map::from_iter([("id".to_string(), Value::String(message_id.to_string()))]),
         )
     }
 
@@ -159,10 +153,7 @@ mod tests {
 
     #[test]
     fn cq_builder_escapes_text_and_supports_arbitrary_types() {
-        let data = Map::from_iter([(
-            "file".into(),
-            Value::String("v.mp4".into()),
-        )]);
+        let data = Map::from_iter([("file".into(), Value::String("v.mp4".into()))]);
         let output = MessageBuilder::new()
             .text("a[b]&c")
             .push(MessageSegment::new("video", data))
