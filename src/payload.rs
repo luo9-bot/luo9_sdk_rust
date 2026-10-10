@@ -1,6 +1,6 @@
+use crate::segment::MessageSegment;
 use serde::Deserialize;
 use serde_json::{Map, Value};
-use crate::segment::MessageSegment;
 
 // ── 消息类型 ────────────────────────────────────────────────────
 
@@ -464,7 +464,8 @@ mod identity_tests {
 
     #[test]
     fn structured_message_segments_and_unknown_fields_are_preserved() {
-        let payload: MessagePayload = serde_json::from_str(r#"{
+        let payload: MessagePayload = serde_json::from_str(
+            r#"{
             "message_type": "group",
             "user_id": 42,
             "group_id": 7,
@@ -474,9 +475,14 @@ mod identity_tests {
                 {"type": "future_napcat_segment", "data": {"opaque": {"x": 1}}}
             ],
             "future_top_level_field": {"keep": true}
-        }"#).expect("payload should parse");
+        }"#,
+        )
+        .expect("payload should parse");
         assert_eq!(payload.message_segments.len(), 2);
-        assert_eq!(payload.message_segments[1].segment_type, "future_napcat_segment");
+        assert_eq!(
+            payload.message_segments[1].segment_type,
+            "future_napcat_segment"
+        );
         assert_eq!(payload.message_segments[1].data["opaque"]["x"], 1);
         assert_eq!(payload.extra["future_top_level_field"]["keep"], true);
     }
@@ -521,12 +527,15 @@ mod identity_tests {
 
     #[test]
     fn message_sender_falls_back_to_top_level_user_id() {
-        let payload: MessagePayload = serde_json::from_str(r#"{
+        let payload: MessagePayload = serde_json::from_str(
+            r#"{
             "message_type": "group",
             "user_id": 10003,
             "group_id": 20003,
             "message": "你好"
-        }"#).expect("test payload should parse");
+        }"#,
+        )
+        .expect("test payload should parse");
         assert_eq!(payload.sender_id(), 10003);
         assert_eq!(payload.sender_display_name(), "群友");
         assert_eq!(payload.sender_identity_label(), "[QQ:10003|群友]");
