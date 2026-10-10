@@ -12,16 +12,13 @@ impl MsgBuilder {
     /// Append an arbitrary OneBot/NapCat segment. Unknown segment types are preserved
     /// and encoded as CQ codes for the existing host transport.
     pub fn segment(mut self, segment: MessageSegment) -> Self {
-        self.parts.push(SegmentMessageBuilder::new().push(segment).build_cq());
+        self.parts
+            .push(SegmentMessageBuilder::new().push(segment).build_cq());
         self
     }
 
     /// Append a segment with an arbitrary type and JSON data map.
-    pub fn raw_segment(
-        self,
-        segment_type: impl Into<String>,
-        data: Map<String, Value>,
-    ) -> Self {
+    pub fn raw_segment(self, segment_type: impl Into<String>, data: Map<String, Value>) -> Self {
         self.segment(MessageSegment::new(segment_type, data))
     }
 
@@ -83,7 +80,10 @@ mod tests {
     #[test]
     fn arbitrary_napcat_segments_can_be_appended() {
         let msg = Msg::txt("hello")
-            .raw_segment("video", Map::from_iter([("file".into(), Value::String("clip.mp4".into()))]))
+            .raw_segment(
+                "video",
+                Map::from_iter([("file".into(), Value::String("clip.mp4".into()))]),
+            )
             .build();
         assert_eq!(msg.to_str().unwrap(), "hello[CQ:video,file=clip.mp4]");
     }
