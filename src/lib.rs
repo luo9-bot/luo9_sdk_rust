@@ -6,10 +6,9 @@ pub mod command;
 pub mod message;
 pub mod pattern;
 pub mod payload;
-pub mod send;
 pub mod segment;
+pub mod send;
 pub mod version;
-
 
 pub struct Bot;
 pub struct Msg;
