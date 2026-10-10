@@ -463,6 +463,25 @@ mod identity_tests {
     use super::*;
 
     #[test]
+    fn structured_message_segments_and_unknown_fields_are_preserved() {
+        let payload: MessagePayload = serde_json::from_str(r#"{
+            "message_type": "group",
+            "user_id": 42,
+            "group_id": 7,
+            "message": "[CQ:text,text=hello]",
+            "message_segments": [
+                {"type": "text", "data": {"text": "hello"}},
+                {"type": "future_napcat_segment", "data": {"opaque": {"x": 1}}}
+            ],
+            "future_top_level_field": {"keep": true}
+        }"#).expect("payload should parse");
+        assert_eq!(payload.message_segments.len(), 2);
+        assert_eq!(payload.message_segments[1].segment_type, "future_napcat_segment");
+        assert_eq!(payload.message_segments[1].data["opaque"]["x"], 1);
+        assert_eq!(payload.extra["future_top_level_field"]["keep"], true);
+    }
+
+    #[test]
     fn sender_prefers_group_card_over_nickname() {
         let sender = Sender {
             user_id: 10001,
