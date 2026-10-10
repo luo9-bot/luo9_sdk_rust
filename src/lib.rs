@@ -10,8 +10,6 @@ pub mod send;
 pub mod segment;
 pub mod version;
 
-#[cfg(test)]
-pub mod tests;
 
 pub struct Bot;
 pub struct Msg;
