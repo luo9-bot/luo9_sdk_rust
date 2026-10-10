@@ -1,4 +1,6 @@
 use serde::Deserialize;
+use serde_json::{Map, Value};
+use crate::segment::MessageSegment;
 
 // ── 消息类型 ────────────────────────────────────────────────────
 
@@ -54,6 +56,18 @@ pub struct MessagePayload {
     pub user_id: u64,
     pub group_id: Option<u64>,
     pub message: String,
+    /// Structured message segments from NapCat's `message` array.
+    #[serde(default)]
+    pub message_segments: Vec<MessageSegment>,
+    /// Original CQ-code representation when provided by the host.
+    #[serde(default)]
+    pub raw_message: Option<String>,
+    /// Original upstream event, including fields unknown to this SDK version.
+    #[serde(default)]
+    pub raw_event: Option<Value>,
+    /// Forward-compatible fields not yet modelled by this SDK.
+    #[serde(flatten)]
+    pub extra: Map<String, Value>,
     // ── 新增字段（向后兼容）──
     #[serde(default)]
     pub time: u64,
@@ -99,6 +113,11 @@ pub struct Status {
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct MetaEventPayload {
+    /// Original upstream event, including unknown extension fields.
+    #[serde(default)]
+    pub raw_event: Option<Value>,
+    #[serde(flatten)]
+    pub extra: Map<String, Value>,
     pub interval: Option<u64>,
     pub meta_event_type: MetaEventType,
     pub sub_type: SubType,
@@ -174,6 +193,11 @@ pub enum HonorType {
 /// 所有新字段都使用 `#[serde(default)]` 以保持向后兼容。
 #[derive(Debug, Clone, Deserialize)]
 pub struct NoticePayload {
+    /// Original upstream event, including unknown extension fields.
+    #[serde(default)]
+    pub raw_event: Option<Value>,
+    #[serde(flatten)]
+    pub extra: Map<String, Value>,
     pub notice_type: NoticeType,
     #[serde(default)]
     pub sub_type: SubType,
@@ -234,6 +258,11 @@ pub enum GroupRequestSubType {
 /// 请求载荷
 #[derive(Debug, Clone, Deserialize)]
 pub struct RequestPayload {
+    /// Original upstream event, including unknown extension fields.
+    #[serde(default)]
+    pub raw_event: Option<Value>,
+    #[serde(flatten)]
+    pub extra: Map<String, Value>,
     pub request_type: RequestType,
     #[serde(default)]
     pub user_id: u64,
@@ -337,6 +366,11 @@ pub enum SubType {
 /// 插件用它把自己发出的内容与 message_id 关联起来（撤回等操作的前提）。
 #[derive(Debug, Clone, Deserialize, Default)]
 pub struct SentPayload {
+    /// Original upstream event, including unknown extension fields.
+    #[serde(default)]
+    pub raw_event: Option<Value>,
+    #[serde(flatten)]
+    pub extra: Map<String, Value>,
     #[serde(default)]
     pub group_id: Option<u64>,
     #[serde(default)]
