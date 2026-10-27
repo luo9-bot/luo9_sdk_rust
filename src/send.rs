@@ -34,8 +34,6 @@ pub enum SendAction {
     },
     #[serde(rename = "send_private_segments")]
     SendPrivateSegments { user_id: u64, message: Vec<Segment> },
-    #[serde(rename = "call")]
-    Call { api: String, params: Value },
     #[serde(rename = "query")]
     Query {
         req_id: String,
@@ -74,7 +72,7 @@ impl SendAction {
                 "send_private_msg",
                 json!({"user_id": user_id, "message": message}),
             ),
-            Self::Call { api, params } | Self::Query { api, params, .. } => (api, params.clone()),
+            Self::Query { api, params, .. } => (api, params.clone()),
         }
     }
 }
@@ -144,13 +142,6 @@ pub fn send_group_segments(group_id: u64, message: Vec<Segment>) -> Option<()> {
 }
 pub fn send_private_segments(user_id: u64, message: Vec<Segment>) -> Option<()> {
     publish_action(SendAction::SendPrivateSegments { user_id, message })
-}
-/// 无需返回值的通用调用；需要确认成功或读取 data 时使用 napcat::call。
-pub fn call_api(api: &str, params: Value) -> Option<()> {
-    publish_action(SendAction::Call {
-        api: api.to_owned(),
-        params,
-    })
 }
 fn publish_action(action: SendAction) -> Option<()> {
     let json = serde_json::to_string(&SendRequest { action }).ok()?;

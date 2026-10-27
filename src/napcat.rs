@@ -98,7 +98,7 @@ impl ApiClient {
 
     /// 同步等待，仅用于插件线程；异步宿主应使用 connection::Sender::call。
     /// 成功返回 NapCat 的 data，失败保留 retcode 和错误信息。
-    pub fn call(&self, api: &str, params: Value) -> Result<Value> {
+    fn request_data(&self, api: &str, params: Value) -> Result<Value> {
         let subscription =
             ResponseSubscription(Bus::topic(TOPIC_RESPONSE).subscribe_independent()?);
         let req_id = format!(
@@ -141,11 +141,6 @@ fn matching_response(raw: &str, req_id: &str, api: &str) -> Option<ApiResponse> 
     (response.req_id == req_id && response.api == api).then_some(response)
 }
 
-/// 使用默认 30 秒等待上限调用任意 NapCat API。
-pub fn call(api: &str, params: Value) -> Result<Value> {
-    ApiClient::default().call(api, params)
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -168,31 +163,31 @@ mod tests {
 
 impl ApiClient {
     pub fn get_login_info(&self) -> Result<Value> {
-        self.call("get_login_info", serde_json::json!({}))
+        self.request_data("get_login_info", serde_json::json!({}))
     }
     /// `get_status`：返回成功响应的 data。
     pub fn get_status(&self) -> Result<Value> {
-        self.call("get_status", serde_json::json!({}))
+        self.request_data("get_status", serde_json::json!({}))
     }
     /// `get_version_info`：返回成功响应的 data。
     pub fn get_version_info(&self) -> Result<Value> {
-        self.call("get_version_info", serde_json::json!({}))
+        self.request_data("get_version_info", serde_json::json!({}))
     }
     /// `get_friend_list`：返回成功响应的 data。
     pub fn get_friend_list(&self, no_cache: bool) -> Result<Value> {
-        self.call("get_friend_list", serde_json::json!({"no_cache": no_cache}))
+        self.request_data("get_friend_list", serde_json::json!({"no_cache": no_cache}))
     }
     /// `get_stranger_info`：返回成功响应的 data。
     pub fn get_stranger_info(&self, user_id: u64) -> Result<Value> {
-        self.call("get_stranger_info", serde_json::json!({"user_id": user_id}))
+        self.request_data("get_stranger_info", serde_json::json!({"user_id": user_id}))
     }
     /// `get_group_list`：返回成功响应的 data。
     pub fn get_group_list(&self) -> Result<Value> {
-        self.call("get_group_list", serde_json::json!({}))
+        self.request_data("get_group_list", serde_json::json!({}))
     }
     /// `get_group_info`：返回成功响应的 data。
     pub fn get_group_info(&self, group_id: u64, no_cache: bool) -> Result<Value> {
-        self.call(
+        self.request_data(
             "get_group_info",
             serde_json::json!({"group_id": group_id, "no_cache": no_cache}),
         )
@@ -204,32 +199,32 @@ impl ApiClient {
         user_id: u64,
         no_cache: bool,
     ) -> Result<Value> {
-        self.call(
+        self.request_data(
             "get_group_member_info",
             serde_json::json!({"group_id": group_id, "user_id": user_id, "no_cache": no_cache}),
         )
     }
     /// `get_group_member_list`：返回成功响应的 data。
     pub fn get_group_member_list(&self, group_id: u64) -> Result<Value> {
-        self.call(
+        self.request_data(
             "get_group_member_list",
             serde_json::json!({"group_id": group_id}),
         )
     }
     /// `get_group_honor_info`：返回成功响应的 data。
     pub fn get_group_honor_info(&self, group_id: u64, kind: &str) -> Result<Value> {
-        self.call(
+        self.request_data(
             "get_group_honor_info",
             serde_json::json!({"group_id": group_id, "type": kind}),
         )
     }
     /// `get_msg`：返回成功响应的 data。
     pub fn get_msg(&self, message_id: i64) -> Result<Value> {
-        self.call("get_msg", serde_json::json!({"message_id": message_id}))
+        self.request_data("get_msg", serde_json::json!({"message_id": message_id}))
     }
     /// `get_forward_msg`：返回成功响应的 data。
     pub fn get_forward_msg(&self, message_id: &str) -> Result<Value> {
-        self.call(
+        self.request_data(
             "get_forward_msg",
             serde_json::json!({"message_id": message_id}),
         )
@@ -246,7 +241,7 @@ impl ApiClient {
         if message_seq.is_none() {
             params.as_object_mut().unwrap().remove("message_seq");
         }
-        self.call("get_group_msg_history", params)
+        self.request_data("get_group_msg_history", params)
     }
     /// `get_friend_msg_history`：返回成功响应的 data。
     pub fn get_friend_msg_history(
@@ -260,66 +255,66 @@ impl ApiClient {
         if message_seq.is_none() {
             params.as_object_mut().unwrap().remove("message_seq");
         }
-        self.call("get_friend_msg_history", params)
+        self.request_data("get_friend_msg_history", params)
     }
     /// `get_image`：返回成功响应的 data。
     pub fn get_image(&self, file: &str) -> Result<Value> {
-        self.call("get_image", serde_json::json!({"file": file}))
+        self.request_data("get_image", serde_json::json!({"file": file}))
     }
     /// `get_file`：返回成功响应的 data。
     pub fn get_file(&self, file: &str) -> Result<Value> {
-        self.call("get_file", serde_json::json!({"file": file}))
+        self.request_data("get_file", serde_json::json!({"file": file}))
     }
     /// `get_record`：返回成功响应的 data。
     pub fn get_record(&self, file: &str, out_format: &str) -> Result<Value> {
-        self.call(
+        self.request_data(
             "get_record",
             serde_json::json!({"file": file, "out_format": out_format}),
         )
     }
     /// `ocr_image`：返回成功响应的 data。
     pub fn ocr_image(&self, image: &str) -> Result<Value> {
-        self.call("ocr_image", serde_json::json!({"image": image}))
+        self.request_data("ocr_image", serde_json::json!({"image": image}))
     }
     /// `can_send_image`：返回成功响应的 data。
     pub fn can_send_image(&self) -> Result<Value> {
-        self.call("can_send_image", serde_json::json!({}))
+        self.request_data("can_send_image", serde_json::json!({}))
     }
     /// `can_send_record`：返回成功响应的 data。
     pub fn can_send_record(&self) -> Result<Value> {
-        self.call("can_send_record", serde_json::json!({}))
+        self.request_data("can_send_record", serde_json::json!({}))
     }
     /// `send_like`：返回成功响应的 data。
     pub fn send_like(&self, user_id: u64, times: u32) -> Result<Value> {
-        self.call(
+        self.request_data(
             "send_like",
             serde_json::json!({"user_id": user_id, "times": times}),
         )
     }
     /// `set_friend_add_request`：返回成功响应的 data。
     pub fn set_friend_add_request(&self, flag: &str, approve: bool, remark: &str) -> Result<Value> {
-        self.call(
+        self.request_data(
             "set_friend_add_request",
             serde_json::json!({"flag": flag, "approve": approve, "remark": remark}),
         )
     }
     /// `set_group_add_request`：返回成功响应的 data。
     pub fn set_group_add_request(&self, flag: &str, approve: bool, reason: &str) -> Result<Value> {
-        self.call(
+        self.request_data(
             "set_group_add_request",
             serde_json::json!({"flag": flag, "approve": approve, "reason": reason}),
         )
     }
     /// `set_friend_remark`：返回成功响应的 data。
     pub fn set_friend_remark(&self, user_id: u64, remark: &str) -> Result<Value> {
-        self.call(
+        self.request_data(
             "set_friend_remark",
             serde_json::json!({"user_id": user_id, "remark": remark}),
         )
     }
     /// `set_group_ban`：返回成功响应的 data。
     pub fn set_group_ban(&self, group_id: u64, user_id: u64, duration: u32) -> Result<Value> {
-        self.call(
+        self.request_data(
             "set_group_ban",
             serde_json::json!({"group_id": group_id, "user_id": user_id, "duration": duration}),
         )
@@ -331,39 +326,39 @@ impl ApiClient {
         user_id: u64,
         reject_add_request: bool,
     ) -> Result<Value> {
-        self.call("set_group_kick", serde_json::json!({"group_id": group_id, "user_id": user_id, "reject_add_request": reject_add_request}))
+        self.request_data("set_group_kick", serde_json::json!({"group_id": group_id, "user_id": user_id, "reject_add_request": reject_add_request}))
     }
     /// `set_group_whole_ban`：返回成功响应的 data。
     pub fn set_group_whole_ban(&self, group_id: u64, enable: bool) -> Result<Value> {
-        self.call(
+        self.request_data(
             "set_group_whole_ban",
             serde_json::json!({"group_id": group_id, "enable": enable}),
         )
     }
     /// `set_group_admin`：返回成功响应的 data。
     pub fn set_group_admin(&self, group_id: u64, user_id: u64, enable: bool) -> Result<Value> {
-        self.call(
+        self.request_data(
             "set_group_admin",
             serde_json::json!({"group_id": group_id, "user_id": user_id, "enable": enable}),
         )
     }
     /// `set_group_card`：返回成功响应的 data。
     pub fn set_group_card(&self, group_id: u64, user_id: u64, card: &str) -> Result<Value> {
-        self.call(
+        self.request_data(
             "set_group_card",
             serde_json::json!({"group_id": group_id, "user_id": user_id, "card": card}),
         )
     }
     /// `set_group_name`：返回成功响应的 data。
     pub fn set_group_name(&self, group_id: u64, group_name: &str) -> Result<Value> {
-        self.call(
+        self.request_data(
             "set_group_name",
             serde_json::json!({"group_id": group_id, "group_name": group_name}),
         )
     }
     /// `set_group_leave`：返回成功响应的 data。
     pub fn set_group_leave(&self, group_id: u64, is_dismiss: bool) -> Result<Value> {
-        self.call(
+        self.request_data(
             "set_group_leave",
             serde_json::json!({"group_id": group_id, "is_dismiss": is_dismiss}),
         )
@@ -375,50 +370,50 @@ impl ApiClient {
         user_id: u64,
         special_title: &str,
     ) -> Result<Value> {
-        self.call("set_group_special_title", serde_json::json!({"group_id": group_id, "user_id": user_id, "special_title": special_title}))
+        self.request_data("set_group_special_title", serde_json::json!({"group_id": group_id, "user_id": user_id, "special_title": special_title}))
     }
     /// `group_poke`：返回成功响应的 data。
     pub fn group_poke(&self, group_id: u64, user_id: u64) -> Result<Value> {
-        self.call(
+        self.request_data(
             "group_poke",
             serde_json::json!({"group_id": group_id, "user_id": user_id}),
         )
     }
     /// `friend_poke`：返回成功响应的 data。
     pub fn friend_poke(&self, user_id: u64) -> Result<Value> {
-        self.call("friend_poke", serde_json::json!({"user_id": user_id}))
+        self.request_data("friend_poke", serde_json::json!({"user_id": user_id}))
     }
     /// `set_self_longnick`：返回成功响应的 data。
     pub fn set_self_longnick(&self, long_nick: &str) -> Result<Value> {
-        self.call(
+        self.request_data(
             "set_self_longnick",
             serde_json::json!({"longNick": long_nick}),
         )
     }
     /// `set_input_status`：返回成功响应的 data。
     pub fn set_input_status(&self, user_id: u64, event_type: u32) -> Result<Value> {
-        self.call(
+        self.request_data(
             "set_input_status",
             serde_json::json!({"user_id": user_id, "event_type": event_type}),
         )
     }
     /// `get_essence_msg_list`：返回成功响应的 data。
     pub fn get_essence_msg_list(&self, group_id: u64) -> Result<Value> {
-        self.call(
+        self.request_data(
             "get_essence_msg_list",
             serde_json::json!({"group_id": group_id}),
         )
     }
     /// `set_essence_msg`：返回成功响应的 data。
     pub fn set_essence_msg(&self, message_id: i64) -> Result<Value> {
-        self.call(
+        self.request_data(
             "set_essence_msg",
             serde_json::json!({"message_id": message_id}),
         )
     }
     /// `delete_essence_msg`：返回成功响应的 data。
     pub fn delete_essence_msg(&self, message_id: i64) -> Result<Value> {
-        self.call(
+        self.request_data(
             "delete_essence_msg",
             serde_json::json!({"message_id": message_id}),
         )
@@ -436,95 +431,95 @@ impl ApiClient {
         if folder.is_none() {
             params.as_object_mut().unwrap().remove("folder");
         }
-        self.call("upload_group_file", params)
+        self.request_data("upload_group_file", params)
     }
     /// `upload_private_file`：返回成功响应的 data。
     pub fn upload_private_file(&self, user_id: u64, file: &str, name: &str) -> Result<Value> {
-        self.call(
+        self.request_data(
             "upload_private_file",
             serde_json::json!({"user_id": user_id, "file": file, "name": name}),
         )
     }
     /// `get_group_root_files`：返回成功响应的 data。
     pub fn get_group_root_files(&self, group_id: u64) -> Result<Value> {
-        self.call(
+        self.request_data(
             "get_group_root_files",
             serde_json::json!({"group_id": group_id}),
         )
     }
     /// `get_group_files_by_folder`：返回成功响应的 data。
     pub fn get_group_files_by_folder(&self, group_id: u64, folder_id: &str) -> Result<Value> {
-        self.call(
+        self.request_data(
             "get_group_files_by_folder",
             serde_json::json!({"group_id": group_id, "folder_id": folder_id}),
         )
     }
     /// `get_group_file_url`：返回成功响应的 data。
     pub fn get_group_file_url(&self, group_id: u64, file_id: &str) -> Result<Value> {
-        self.call(
+        self.request_data(
             "get_group_file_url",
             serde_json::json!({"group_id": group_id, "file_id": file_id}),
         )
     }
     /// `get_group_file_system_info`：返回成功响应的 data。
     pub fn get_group_file_system_info(&self, group_id: u64) -> Result<Value> {
-        self.call(
+        self.request_data(
             "get_group_file_system_info",
             serde_json::json!({"group_id": group_id}),
         )
     }
     /// `create_group_file_folder`：返回成功响应的 data。
     pub fn create_group_file_folder(&self, group_id: u64, name: &str) -> Result<Value> {
-        self.call(
+        self.request_data(
             "create_group_file_folder",
             serde_json::json!({"group_id": group_id, "name": name}),
         )
     }
     /// `delete_group_folder`：返回成功响应的 data。
     pub fn delete_group_folder(&self, group_id: u64, folder_id: &str) -> Result<Value> {
-        self.call(
+        self.request_data(
             "delete_group_folder",
             serde_json::json!({"group_id": group_id, "folder_id": folder_id}),
         )
     }
     /// `delete_group_file`：返回成功响应的 data。
     pub fn delete_group_file(&self, group_id: u64, file_id: &str) -> Result<Value> {
-        self.call(
+        self.request_data(
             "delete_group_file",
             serde_json::json!({"group_id": group_id, "file_id": file_id}),
         )
     }
     /// `_send_group_notice`：返回成功响应的 data。
     pub fn send_group_notice(&self, group_id: u64, content: &str) -> Result<Value> {
-        self.call(
+        self.request_data(
             "_send_group_notice",
             serde_json::json!({"group_id": group_id, "content": content}),
         )
     }
     /// `_get_group_notice`：返回成功响应的 data。
     pub fn get_group_notice(&self, group_id: u64) -> Result<Value> {
-        self.call(
+        self.request_data(
             "_get_group_notice",
             serde_json::json!({"group_id": group_id}),
         )
     }
     /// `_del_group_notice`：返回成功响应的 data。
     pub fn delete_group_notice(&self, group_id: u64, notice_id: &str) -> Result<Value> {
-        self.call(
+        self.request_data(
             "_del_group_notice",
             serde_json::json!({"group_id": group_id, "notice_id": notice_id}),
         )
     }
     /// `get_group_at_all_remain`：返回成功响应的 data。
     pub fn get_group_at_all_remain(&self, group_id: u64) -> Result<Value> {
-        self.call(
+        self.request_data(
             "get_group_at_all_remain",
             serde_json::json!({"group_id": group_id}),
         )
     }
     /// `get_credentials`：返回成功响应的 data。
     pub fn get_credentials(&self, domain: &str) -> Result<Value> {
-        self.call("get_credentials", serde_json::json!({"domain": domain}))
+        self.request_data("get_credentials", serde_json::json!({"domain": domain}))
     }
     /// `send_group_msg`：返回成功响应的 data。
     pub fn send_group_segments(
@@ -532,7 +527,7 @@ impl ApiClient {
         group_id: u64,
         message: Vec<crate::segment::Segment>,
     ) -> Result<Value> {
-        self.call(
+        self.request_data(
             "send_group_msg",
             serde_json::json!({"group_id": group_id, "message": message}),
         )
@@ -543,7 +538,7 @@ impl ApiClient {
         user_id: u64,
         message: Vec<crate::segment::Segment>,
     ) -> Result<Value> {
-        self.call(
+        self.request_data(
             "send_private_msg",
             serde_json::json!({"user_id": user_id, "message": message}),
         )
@@ -554,7 +549,7 @@ impl ApiClient {
         group_id: u64,
         messages: Vec<crate::segment::Segment>,
     ) -> Result<Value> {
-        self.call(
+        self.request_data(
             "send_group_forward_msg",
             serde_json::json!({"group_id": group_id, "messages": messages}),
         )
@@ -565,18 +560,18 @@ impl ApiClient {
         user_id: u64,
         messages: Vec<crate::segment::Segment>,
     ) -> Result<Value> {
-        self.call(
+        self.request_data(
             "send_private_forward_msg",
             serde_json::json!({"user_id": user_id, "messages": messages}),
         )
     }
     /// `delete_msg`：返回成功响应的 data。
     pub fn delete_msg_signed(&self, message_id: i64) -> Result<Value> {
-        self.call("delete_msg", serde_json::json!({"message_id": message_id}))
+        self.request_data("delete_msg", serde_json::json!({"message_id": message_id}))
     }
     /// `set_msg_emoji_like`：返回成功响应的 data。
     pub fn set_msg_emoji_like_signed(&self, message_id: i64, emoji_id: &str) -> Result<Value> {
-        self.call(
+        self.request_data(
             "set_msg_emoji_like",
             serde_json::json!({"message_id": message_id, "emoji_id": emoji_id}),
         )

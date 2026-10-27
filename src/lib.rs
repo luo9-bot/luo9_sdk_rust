@@ -67,21 +67,12 @@ pub unsafe extern "C" fn luo9_init_subscribers(subscribers: *const PluginSubscri
 }
 
 impl Bot {
-    /// 带返回值的 NapCat API 客户端。
-    pub fn api() -> napcat::ApiClient {
-        napcat::ApiClient::default()
-    }
-
     pub fn send_group_segments(group_id: u64, message: Vec<segment::Segment>) -> Option<()> {
         send::send_group_segments(group_id, message)
     }
 
     pub fn send_private_segments(user_id: u64, message: Vec<segment::Segment>) -> Option<()> {
         send::send_private_segments(user_id, message)
-    }
-
-    pub fn call_api(api: &str, params: serde_json::Value) -> Option<()> {
-        send::call_api(api, params)
     }
     pub fn get_version() -> String {
         unsafe {
@@ -143,3 +134,4 @@ unsafe extern "C" {
     /// 获取核心版本信息
     pub fn luo9_version() -> *const c_char;
 }
+

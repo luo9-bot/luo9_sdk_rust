@@ -211,14 +211,14 @@ let members = api.get_group_member_list(123456)?;
 let image = api.get_image("NapCat 图片标识")?;
 api.set_group_ban(123456, 10001, 60)?;
 api.set_group_add_request("事件中的 flag", true, "")?;
-let extension = api.call("get_group_info_ex", json!({"group_id": 123456}))?;
 ```
 
 API 查询先创建独立 `luo9_api_response` 订阅，再向 `luo9_send` 发布带 `req_id`
 及 `response_subscriber` 的请求。核心将 `ApiResponse` 定向发布给调用者，SDK 同时
 校验请求 ID 和 API 名称；并发查询不会互相抢结果。成功、失败、超时均取消订阅。
 失败返回 `ApiError`，远端错误保留 `retcode`；断线也会得到明确错误。
-同步查询应运行在插件工作线程，不要直接阻塞异步运行时的 worker。
+同步查询应运行在插件工作线程，不要直接阻塞异步运行时的 worker。SDK 公共入口只
+提供强类型方法；未封装接口由核心内部协议处理，不要求插件作者传递 action 字符串。
 
 旧文本发送、CQ 消息和 `PluginSubscribers` 的 FFI 布局保持兼容。
 `MessagePayload.segments` 保留图片 URL 和未知消息段数据；`NoticePayload.raw_event`
