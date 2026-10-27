@@ -4,13 +4,12 @@ use std::ffi::CString;
 pub mod bus;
 pub mod command;
 pub mod message;
+pub mod napcat;
 pub mod pattern;
 pub mod payload;
+pub mod segment;
 pub mod send;
 pub mod version;
-
-#[cfg(test)]
-pub mod tests;
 
 pub struct Bot;
 pub struct Msg;
@@ -68,6 +67,22 @@ pub unsafe extern "C" fn luo9_init_subscribers(subscribers: *const PluginSubscri
 }
 
 impl Bot {
+    /// 带返回值的 NapCat API 客户端。
+    pub fn api() -> napcat::ApiClient {
+        napcat::ApiClient::default()
+    }
+
+    pub fn send_group_segments(group_id: u64, message: Vec<segment::Segment>) -> Option<()> {
+        send::send_group_segments(group_id, message)
+    }
+
+    pub fn send_private_segments(user_id: u64, message: Vec<segment::Segment>) -> Option<()> {
+        send::send_private_segments(user_id, message)
+    }
+
+    pub fn call_api(api: &str, params: serde_json::Value) -> Option<()> {
+        send::call_api(api, params)
+    }
     pub fn get_version() -> String {
         unsafe {
             let ptr = luo9_version();

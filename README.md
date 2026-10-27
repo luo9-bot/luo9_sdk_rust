@@ -22,8 +22,11 @@
 
 ```toml
 [dependencies]
-luo9_sdk = "0.5"
+luo9_sdk = "0.8.0-beta.3"
 ```
+
+源码联调时可使用 `luo9_sdk = { version = "0.8.0-beta.3", path = "../luo9_sdk_rust" }`。
+该版本应先发布 SDK，再发布依赖它的插件；本次源码更新不自动发布到 crates.io。
 
 ## 快速开始
 
@@ -75,7 +78,7 @@ cmd.on_pattern("[CQ:at,qq={qq}]{content}", |caps, args| {
 ### 消息构建
 
 ```rust
-use luo9_sdk::message::Msg;
+use luo9_sdk::Msg;
 
 // 构建包含多种元素的消息
 let msg = Msg::txt("Hello ")
@@ -183,3 +186,46 @@ fn handle_event(json: &str) {
 - [文档](https://www.drluo.top/posts/luo9_sdk)
 - [GitHub](https://github.com/luo9-bot/luo9_sdk_rust)
 - [Crate](https://crates.io/crates/luo9_sdk)
+
+
+## NapCat API（0.8.0-beta.3）
+
+需配合 `luo9_bot 0.1.0-beta.13`。新增 `napcat::ApiClient`、`segment::Segment`
+以及 58 个常用 API 方法，覆盖消息/历史、图片/语音/文件、账号/好友、群管理、
+申请处理、群文件、公告、精华和合并转发。所有未单独封装的 NapCat 接口可用 `call`。
+
+```rust
+use luo9_sdk::{Bot, napcat::ApiClient, segment as seg};
+use serde_json::json;
+use std::time::Duration;
+
+// 消息段发送（fire-and-forget），图片 file 接受 URL、base64://、NapCat 主机路径。
+Bot::send_group_segments(123456, vec![
+    seg::reply(789), seg::at(10001), seg::text("看图"),
+    seg::image("https://example.com/image.png"),
+]);
+
+// 需要返回值时，在插件工作线程内调用；返回 NapCat 成功响应的 data。
+let api = ApiClient::new(Duration::from_secs(10));
+let members = api.get_group_member_list(123456)?;
+let image = api.get_image("NapCat 图片标识")?;
+api.set_group_ban(123456, 10001, 60)?;
+api.set_group_add_request("事件中的 flag", true, "")?;
+let extension = api.call("get_group_info_ex", json!({"group_id": 123456}))?;
+```
+
+API 查询先创建独立 `luo9_api_response` 订阅，再向 `luo9_send` 发布带 `req_id`
+及 `response_subscriber` 的请求。核心将 `ApiResponse` 定向发布给调用者，SDK 同时
+校验请求 ID 和 API 名称；并发查询不会互相抢结果。成功、失败、超时均取消订阅。
+失败返回 `ApiError`，远端错误保留 `retcode`；断线也会得到明确错误。
+同步查询应运行在插件工作线程，不要直接阻塞异步运行时的 worker。
+
+旧文本发送、CQ 消息和 `PluginSubscribers` 的 FFI 布局保持兼容。
+`MessagePayload.segments` 保留图片 URL 和未知消息段数据；`NoticePayload.raw_event`
+保留完整通知事件。新子类型可回退解析。`post_type`、`target_id` 可区分
+`message_sent`；消息段发送回执包含 `message_format` 与 `segments`。
+`signed_message_id` / `onebot_message_id()` 保留有符号消息 ID，旧 `u64` 字段继续提供
+正整数 ID。撤回有符号 ID 用 `delete_msg_signed`。
+
+参考 [NapCat 官方 API](https://napneko.github.io/onebot/api) 和
+[消息段文档](https://napneko.github.io/onebot/segment)。接口是否可用及权限由 NapCat 决定。

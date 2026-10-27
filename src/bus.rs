@@ -69,6 +69,11 @@ impl<'a> Topic<'a> {
             return Ok(id);
         }
 
+        self.subscribe_independent()
+    }
+
+    /// 始终创建独立订阅，供并发 API 查询使用；不复用宿主预创建的消息订阅。
+    pub fn subscribe_independent(&self) -> Result<usize, BusError> {
         let topic = CString::new(self.name).map_err(|_| BusError::InvalidString)?;
         let ret = unsafe { luo9_bus_subscribe(topic.as_ptr()) };
         match ret {

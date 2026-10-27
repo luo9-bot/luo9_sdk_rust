@@ -24,11 +24,12 @@ impl MsgBuilder {
 
     pub fn image(mut self, path: impl Into<String>) -> Self {
         let path_str: String = path.into();
-        if path_str.contains("http") {
-            self.parts.push(format!("[CQ:image,url={}]", path_str));
-        } else {
-            self.parts.push(format!("[CQ:image,file={}]", path_str));
-        }
+        self.parts.push(crate::segment::image(path_str).to_cq());
+        self
+    }
+
+    pub fn reply(mut self, message_id: i64) -> Self {
+        self.parts.push(crate::segment::reply(message_id).to_cq());
         self
     }
 
@@ -61,6 +62,17 @@ impl Msg {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn image_builder_uses_file_and_escapes_cq_parameters() {
+        let message = Msg::image("https://example.test/a,b?x=1&y=2")
+            .reply(-7)
+            .build();
+        assert_eq!(
+            message.to_str().unwrap(),
+            "[CQ:image,file=https://example.test/a&#44;b?x=1&amp;y=2][CQ:reply,id=-7]"
+        );
+    }
 
     #[test]
     fn test_new_msg() {

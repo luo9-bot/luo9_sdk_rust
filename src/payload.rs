@@ -77,6 +77,15 @@ pub struct MessagePayload {
     pub anonymous: Option<Anonymous>,
     #[serde(default)]
     pub message_format: String,
+    /// 原始消息段（图片 URL 和 NapCat 扩展字段不再依赖 raw_message）。
+    #[serde(default)]
+    pub segments: Vec<crate::segment::Segment>,
+    #[serde(default)]
+    pub signed_message_id: Option<i64>,
+    #[serde(default)]
+    pub target_id: Option<u64>,
+    #[serde(default)]
+    pub post_type: String,
 }
 
 // ── 元事件类型 ──────────────────────────────────────────────────
@@ -206,6 +215,8 @@ pub struct NoticePayload {
     pub flag: Option<String>,
     #[serde(default)]
     pub comment: Option<String>,
+    #[serde(default)]
+    pub raw_event: serde_json::Value,
 }
 
 // ── 请求类型 ────────────────────────────────────────────────────
@@ -323,9 +334,15 @@ pub enum SubType {
     Title,
     #[serde(rename = "profile_like")]
     ProfileLike,
+    #[serde(rename = "group_name")]
+    GroupName,
+    #[serde(rename = "gray_tip")]
+    GrayTip,
+    #[serde(rename = "disband")]
+    Disband,
     // 默认值
     #[default]
-    #[serde(rename = "none")]
+    #[serde(other)]
     None,
 }
 
@@ -347,6 +364,12 @@ pub struct SentPayload {
     pub message: String,
     #[serde(default)]
     pub time: u64,
+    #[serde(default)]
+    pub signed_message_id: Option<i64>,
+    #[serde(default)]
+    pub message_format: String,
+    #[serde(default)]
+    pub segments: Vec<crate::segment::Segment>,
 }
 
 // ── 总线载荷 ────────────────────────────────────────────────────
@@ -366,6 +389,7 @@ pub enum BusPayload {
     Notice(NoticePayload),
     Request(RequestPayload),
     Sent(SentPayload),
+    ApiResponse(crate::napcat::ApiResponse),
 }
 
 impl Sender {
@@ -389,6 +413,37 @@ impl Sender {
 }
 
 impl MessagePayload {
+    /// 原始 OneBot 消息 ID；兼容旧核心只上报正整数的行为。
+    pub fn onebot_message_id(&self) -> Option<i64> {
+        self.signed_message_id
+            .or_else(|| i64::try_from(self.message_id).ok())
+    }
+    pub fn plain_text(&self) -> String {
+        self.message_segments()
+            .iter()
+            .filter(|segment| segment.kind == "text")
+            .filter_map(|segment| segment.data.get("text").and_then(serde_json::Value::as_str))
+            .collect()
+    }
+    pub fn is_at(&self, qq: u64) -> bool {
+        self.message_segments().iter().any(|segment| {
+            segment.kind == "at"
+                && segment.data.get("qq").is_some_and(|value| {
+                    value.as_str().is_some_and(|id| id == qq.to_string())
+                        || value.as_u64() == Some(qq)
+                })
+        })
+    }
+
+    /// 新核心优先读取 segments，旧核心/字符串格式按 CQ 解析。
+    pub fn message_segments(&self) -> std::borrow::Cow<'_, [crate::segment::Segment]> {
+        if self.segments.is_empty() {
+            std::borrow::Cow::Owned(crate::segment::from_cq(&self.message))
+        } else {
+            std::borrow::Cow::Borrowed(&self.segments)
+        }
+    }
+
     /// 消息发送者的稳定 QQ 身份。
     pub fn sender_id(&self) -> u64 {
         self.sender
@@ -468,12 +523,15 @@ mod identity_tests {
 
     #[test]
     fn message_sender_falls_back_to_top_level_user_id() {
-        let payload: MessagePayload = serde_json::from_str(r#"{
+        let payload: MessagePayload = serde_json::from_str(
+            r#"{
             "message_type": "group",
             "user_id": 10003,
             "group_id": 20003,
             "message": "你好"
-        }"#).expect("test payload should parse");
+        }"#,
+        )
+        .expect("test payload should parse");
         assert_eq!(payload.sender_id(), 10003);
         assert_eq!(payload.sender_display_name(), "群友");
         assert_eq!(payload.sender_identity_label(), "[QQ:10003|群友]");
